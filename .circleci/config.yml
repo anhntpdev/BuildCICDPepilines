@@ -178,9 +178,9 @@ jobs:
       - image: python:alpine3.17
     steps:
       - checkout
-      - run:
-          name: Install tar and gzip utilities
-          command: yum install tar gzip -y
+      - add_ssh_keys:
+          fingerprints:
+            - "96:25:55:13:a3:99:63:7b:3a:13:2b:db:01:3a:6e:4f"
       - attach_workspace:
           at: ~/
       - run:
