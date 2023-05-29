@@ -279,29 +279,24 @@ jobs:
           name: Install dependencies
           command: |
             python3 -m pip install --user ansible
-      - attach_workspace:
-          at: ~/
       - run:
-          name: Install Ansible
+          name: Build backend package
           command: |
-            sudo apt update
-            sudo apt install software-properties-common -y
-            sudo add-apt-repository --yes --update ppa:ansible/ansible
-            sudo apt install ansible -y
+            cd backend
+            npm i
+            npm run build
+            tar -czf artifact.tar.gz dist/* package*
+            cp artifact.tar.gz ../.circleci/ansible/roles/deploy/files/artifact.tar.gz
       - run:
           name: Deploy backend
           command: |
-            cd backend # echo TYPEORM_HOST=$TYPEORM_HOST >> "backend/.env"
-            npm i
-            npm run build
-            tar -C backend -czvf artifact.tar.gz .
-            mkdir -p ~/BuildCICDPepilines/.circleci/ansible/roles/deploy/files/
-            mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz
-
             cd .circleci/ansible
             echo "Contents  of the inventory.txt file is -------"
             cat inventory.txt
-            ansible-playbook -i inventory.txt deploy-backend.yml -v
+            export TYPEORM_MIGRATIONS_DIR=./migrations
+            export TYPEORM_ENTITIES=./modules/domain/**/*.entity{.ts,.js}
+            export TYPEORM_MIGRATIONS=./migrations/*.ts
+            ansible-playbook -i inventory.txt deploy-backend.yml
       - destroy-environment
       - revert-migrations   
 
