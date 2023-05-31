@@ -378,15 +378,15 @@ jobs:
       - revert-migrations
       - destroy-environment
 
-cleanup:
+  cleanup:
     docker:
       - image: amazon/aws-cli
     steps:
       - checkout
       - run:
-          name: Get old stack workflow id and Cleanup
+          name: Get old stack workflow id
           command: |           
-            export OldWorkflowID=$(curl --insecure https://kvdb.io/${KVDB_BUCKET_ID}/old_workflow_id)
+            export OldWorkflowID=$(curl --insecure https://kvdb.io/W8vVGzcseM1KcNfzV3AnAb/old_workflow_id)
             export STACKS=($(aws --region us-east-1 cloudformation list-stacks --query "StackSummaries[*].StackName" --stack-status-filter CREATE_COMPLETE --no-paginate --output text))
             echo OldWorkflowID: "${OldWorkflowID}"
             echo CIRCLE_WORKFLOW_ID "$CIRCLE_WORKFLOW_ID"
