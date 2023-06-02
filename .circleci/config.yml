@@ -370,14 +370,17 @@ jobs:
       - run:
           name: Update cloudfront distribution
           command: |
+            export OLD_WORKFLOW_ID=$(aws cloudformation \
+                      list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+                      --no-paginate --output text)
+            # Change the initial stack name, as applicable to you
             aws cloudformation deploy \
                       --template-file .circleci/files/cloudfront.yml \
-                      --stack-name InitialStack \
-                      --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
+                      --stack-name "InitialStack-${OLD_WORKFLOW_ID}" \
+                      --parameter-overrides WorkflowID="udapeople-${CIRCLE_WORKFLOW_ID:0:7}" \
                       --tags project=udapeople
-            
-      - revert-migrations
       - destroy-environment
+      - revert-migrations 
 
   cleanup:
     docker:
@@ -385,19 +388,28 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Get old stack workflow id
+          name: Fetch the Old workflow ID
           command: |
-            export STACKS=($(aws cloudformation list-stacks \
-                --query "StackSummaries[*].StackName" \
-                --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
-            echo Stack names: "${STACKS[@]}"
+            export OldWorkflowID=$(aws cloudformation \
+                      list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+                      --no-paginate --output text)
+            echo OldWorkflowID: "${OldWorkflowID}"
+            echo CIRCLE_WORKFLOW_ID "${CIRCLE_WORKFLOW_ID:0:7}"
             export OldWorkflowID=$(curl --insecure https://W8vVGzcseM1KcNfzV3AnAb/old_workflow_id)
             echo Old Workflow ID: $OldWorkflowID 
-            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
+
+            ## Fetch the stack names          
+            export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
+                      --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
+            echo Stack names: "${STACKS[@]}"          
+            if [[ "${CIRCLE_WORKFLOW_ID:0:7}" =~ "${OldWorkflowID}" ]]
             then
+              echo '-------------------Delete Confirmed---------------------------'
               aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
-              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}" 
               aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+            else
+              echo '-------------------Cannot Cleanup---------------------------'
             fi
             
 
