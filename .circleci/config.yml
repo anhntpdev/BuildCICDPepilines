@@ -16,27 +16,25 @@ commands:
             aws s3 rm s3://udapeople-<<parameters.workflow_id>> --recursive
             aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.workflow_id >>
 
-  revert-migrations:
+  evert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
     parameters:
-      workflow_id:
+      Workflow_ID:
         type: string
-        default: ${CIRCLE_WORKFLOW_ID:0:7} 
+        default: ${CIRCLE_WORKFLOW_ID:0:7}    
     steps:
       - run:
           name: Revert migrations
           when: on_fail
           command: |
-            # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            SUCCESS=$(curl --insecure  https://kvdb.io/W8vVGzcseM1KcNfzV3AnAb/migration_<< parameters.workflow_id >>)
-            echo ${SUCCESS} 
-            # Logic for reverting the database state
-            if (( $SUCCESS == 1 ));
-            then
-              cd ~/project/backend
-              npm install
-              npm run migration:revert
-            fi  
+              SUCCESS=$(curl -k  https://kvdb.io/W8vVGzcseM1KcNfzV3AnAb/migration_<< parameters.Workflow_ID >> -d '1')
+              # Logic for reverting the database state
+              if (( $SUCCESS == 1 ));
+              then
+                cd ~/project/backend
+                npm install
+                npm run migration:revert
+              fi
             
 jobs:
   build-frontend:
@@ -230,9 +228,9 @@ jobs:
             then
               curl -k https://kvdb.io/W8vVGzcseM1KcNfzV3AnAb/migration_${CIRCLE_WORKFLOW_ID:0:7} -d '1'
             fi
-      # - save_cache:
-      #     paths: [backend/node_modules]
-      #     key: backend-build
+      - save_cache:
+          paths: [backend/node_modules]
+          key: backend-build
       - destroy-environment
       - revert-migrations 
   deploy-frontend:
