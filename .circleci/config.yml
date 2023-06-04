@@ -27,7 +27,8 @@ commands:
           name: Revert migrations
           when: on_fail
           command: |
-              SUCCESS=$(curl -k  https://kvdb.io/W8vVGzcseM1KcNfzV3AnAb/migration_<< parameters.Workflow_ID >> -d '1')
+              #SUCCESS=$(curl -k  https://kvdb.io/W8vVGzcseM1KcNfzV3AnAb/migration_<< parameters.Workflow_ID >> -d '1')
+              SUCCESS=1
               # Logic for reverting the database state
               if (( $SUCCESS == 1 ));
               then
